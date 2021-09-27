@@ -103,23 +103,30 @@ art_dim_indep <- function(ev, n, threshold, model) {
 	d_all <- 1:(p-1)
 	val <- rep(1,K)
 	
-	if (model == "AkjBkQkDk") {
+	if (model == "AKJBKQKDK") {
 		for (ii in 1:K) {
 			df_all <- p*(p+1)/2 - d_all*(p-(d_all+1)/2) - d_all - 1
-			print(df_all)
+			#print(df_all)
 			test <- sapply(d_all, function(x) {
 				art_AkjBk(ev[ii, ], n[ii], x)
 			})
+			#print(test)
 			val[ii] <- which(test <= qchisq(1 - threshold, df_all))[1]
+			if (is.na(val[ii])) {
+				val[ii] <- p-1
+			}
 		}
-	} else if (model == "AkBkQkDk") {
+	} else if (model == "AKBKQKDK") {
 		for (ii in 1:K) {
 			df_all <- p*(p+1)/2 - d_all*(p-(d_all+1)/2) - 2
-			print(df_all)
+			#print(df_all)
 			test <- sapply(d_all, function(x) {
 				art_AkBk(ev[ii, ], n[ii], x)
 			})
 			val[ii] <- which(test <= qchisq(1 - threshold, df_all))[1]
+			if (is.na(val[ii])) {
+				val[ii] <- p-1
+			}
 		}
 	}
 	val
@@ -132,7 +139,7 @@ art_dim_dep <- function(ev, n, threshold, model) {
 	d_init <- rep(1, K)
 	continue <- T
 	
-	if (model == "ABkQkDk") {
+	if (model == "ABKQKDK") {
 		while (continue) {
 			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - 1 - n*d_init/sum(n*d_init)
 			test <- art_ABk(ev, n)(d_init)
@@ -140,7 +147,7 @@ art_dim_dep <- function(ev, n, threshold, model) {
 			whm_pval <- 1 / sum(1 / pval)
 			
 			if (whm_pval < threshold) {
-				pval_min <- min(pval[d_init < p-1])
+				pval_min <- suppressWarnings(min(pval[d_init < p-1]))
 				if (is.infinite(pval_min)) {
 					continue <- F
 					return(d_init)
@@ -153,7 +160,7 @@ art_dim_dep <- function(ev, n, threshold, model) {
 		}
 		return(d_init)
 		
-	} else if (model == "AkjBQkDk") {
+	} else if (model == "AKJBQKDK") {
 		while (continue) {
 			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - d_init - n*d_init/sum(n*d_init)
 			test <- art_AkjB(ev, n)(d_init)
@@ -161,7 +168,7 @@ art_dim_dep <- function(ev, n, threshold, model) {
 			whm_pval <- 1 / sum(1 / pval)
 			
 			if (whm_pval < threshold) {
-				pval_min <- min(pval[d_init < p-1])
+				pval_min <- suppressWarnings(min(pval[d_init < p-1]))
 				if (is.infinite(pval_min)) {
 					continue <- F
 					return(d_init)
@@ -174,7 +181,7 @@ art_dim_dep <- function(ev, n, threshold, model) {
 		}
 		return(d_init)
 		
-	} else if (model == "AkBQkDk") {
+	} else if (model == "AKBQKDK") {
 		while (continue) {
 			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - 1 - n*d_init/sum(n*d_init)
 			test <- art_AkB(ev, n)(d_init)
@@ -182,7 +189,7 @@ art_dim_dep <- function(ev, n, threshold, model) {
 			whm_pval <- 1 / sum(1 / pval)
 			
 			if (whm_pval < threshold) {
-				pval_min <- min(pval[d_init < p-1])
+				pval_min <- suppressWarnings(min(pval[d_init < p-1]))
 				if (is.infinite(pval_min)) {
 					continue <- F
 					return(d_init)
@@ -195,7 +202,7 @@ art_dim_dep <- function(ev, n, threshold, model) {
 		}
 		return(d_init)
 		
-	} else if (model == "ABQkDk") {
+	} else if (model == "ABQKDK") {
 		while (continue) {
 			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - 2*n*d_init/sum(n*d_init)
 			test <- art_AB(ev, n)(d_init)
@@ -203,7 +210,7 @@ art_dim_dep <- function(ev, n, threshold, model) {
 			whm_pval <- 1 / sum(1 / pval)
 			
 			if (whm_pval < threshold) {
-				pval_min <- min(pval[d_init < p-1])
+				pval_min <- suppressWarnings(min(pval[d_init < p-1]))
 				if (is.infinite(pval_min)) {
 					continue <- F
 					return(d_init)
@@ -225,7 +232,7 @@ art_comdim <- function(ev, n, threshold, model) {
 	d_init <- rep(1, K)
 	continue <- T
 	
-	if (model == "AkjBkQkD") {
+	if (model == "AKJBKQKD") {
 		while (continue) {
 			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - 1 - d_init
 			test <- sapply(1:K, function(ii) {
@@ -246,7 +253,7 @@ art_comdim <- function(ev, n, threshold, model) {
 			}
 		}
 		return(d_init)
-	} else if (model == "AkBkQkD") {
+	} else if (model == "AKBKQKD") {
 		while (continue) {
 			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - 2
 			test <- sapply(1:K, function(ii) {
@@ -267,7 +274,7 @@ art_comdim <- function(ev, n, threshold, model) {
 			}
 		}
 		return(d_init)
-	} else if (model == "ABkQkD") {
+	} else if (model == "ABKQKD") {
 		while (continue) {
 			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - 1 - n*d_init/sum(n*d_init)
 			test <- art_ABk(ev, n)(d_init)
@@ -286,7 +293,7 @@ art_comdim <- function(ev, n, threshold, model) {
 			}
 		}
 		return(d_init)
-	} else if (model == "AkjBQkD") {
+	} else if (model == "AKJBQKD") {
 		while (continue) {
 			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - d_init - n*d_init/sum(n*d_init)
 			test <- art_AkjB(ev, n)(d_init)
@@ -305,7 +312,7 @@ art_comdim <- function(ev, n, threshold, model) {
 			}
 		}
 		return(d_init)
-	} else if (model == "AkBQkD") {
+	} else if (model == "AKBQKD") {
 		while (continue) {
 			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - 1 - n*d_init/sum(n*d_init)
 			test <- art_AkB(ev, n)(d_init)
@@ -324,7 +331,7 @@ art_comdim <- function(ev, n, threshold, model) {
 			}
 		}
 		return(d_init)
-	} else if (model == "ABQkD") {
+	} else if (model == "ABQKD") {
 		while (continue) {
 			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - 2*n*d_init/sum(n*d_init)
 			test <- art_AB(ev, n)(d_init)
@@ -343,7 +350,7 @@ art_comdim <- function(ev, n, threshold, model) {
 			}
 		}
 		return(d_init)
-	} else if (model == "AjBQD") {
+	} else if (model == "AJBQD") {
 		
 	} else if (model == "ABQD") {
 		
@@ -354,17 +361,17 @@ art_main <- function(ev, n, threshold, graph = F, noise.ctrl = 1e-6, model) {
 	# n = vector of component-wise sample size
 	n <- round(n)
 	d <- numeric(nrow(ev))
-	if (model %in% c("AkjBkQkDk", "AkBkQkDk")) {
+	if (model %in% c("AKJBKQKDK", "AKBKQKDK")) {
 		# component-wise covariance don't interact
 		d <- art_dim_indep(ev, n, threshold, model)
-	} else if (model %in% c("ABkQkDk", "AkjBQkDk", "AkBQkDk", "ABQkDk")) {
+	} else if (model %in% c("ABKQKDK", "AKJBQKDK", "AKBQKDK", "ABQKDK")) {
 		d <- art_dim_dep(ev, n, threshold, model)
-	} else if (model %in% c("AkjBkQkD", "AkBkQkD", "ABkQkD", "AkjBQkD", "AkBQkD", "ABQkD")) {
+	} else if (model %in% c("AKJBKQKD", "AKBKQKD", "ABKQKD", "AKJBQKD", "AKBQKD", "ABQKD")) {
 		d <- art_comdim(ev, n, threshold, model)
-	} else if (model %in% c("AkjBkQkDk", "AkBkQkDk", "ABkQkDk", "AkjBQkDk", "AkBQkDk", "ABQkDk", "AkjBkQkD", "AkBkQkD", "ABkQkD", "AkjBQkD", "AkBQkD", "ABQkD")) {
+	} else if (model %in% c("AKJBKQKD", "AKBKQKD", "ABKQKD", "AKJBQKD", "AkBQkD", "ABQKD", "AKJBKQKD", "AKBKQKD", "ABKQKD", "AKJBQKD", "AKBQKD", "ABQKD")) {
 		
 	} else {
-		error("Unrecognised submodel.")
+		stop("Unrecognised submodel.")
 	}
 	d
 }
