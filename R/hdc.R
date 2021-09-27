@@ -2,7 +2,7 @@
 # TODO
 # hdclassif_dim_choice => treat the case of cattell scree test with 2 EV
 
-hdclassif_dim_choice <- function(ev, n, method, threshold, graph, noise.ctrl){
+hdclassif_dim_choice <- function(ev, n, method, threshold, graph, noise.ctrl, model){
 	# Selection of the intrinsic dimension 
 	
 	N <- sum(n)
@@ -73,7 +73,7 @@ hdclassif_dim_choice <- function(ev, n, method, threshold, graph, noise.ctrl){
 						# we add some values
 						ev_keep = ev[i, ][ev[i, ] > 0]
 						p2 = length(ev_keep)
-						for(kdim in 1:(min(10, length(ev_keep)))){
+						for(kdim in 1:(length(ev_keep) - 1)){
 							a <- sum(ev[i, 1:kdim])/kdim
 							b <- sum(ev[i, (kdim+1):p2])/(p2-kdim)
 							if (b<0 | a<0){
@@ -91,6 +91,29 @@ hdclassif_dim_choice <- function(ev, n, method, threshold, graph, noise.ctrl){
 					points(d[i], B[d[i]], col=2)
 				}
 			}
+		} else if (method == "art"){
+			# ev: (K by d_max) matrix of eigenvalues from (component-wise) covariance matrices
+			#     each row is a component.
+			#     d_max may be less than p if the user doesn't want to search through all possible intrinsic dimensions.
+			#     for now, d_max is set to p.
+			#     it may be relaxed in the future for computational convenience, but theoretical correctness is prioritised now.
+			if (model)
+			for (ii in 1:K) {
+				# to prevent errors from incorrect sign (can occur in small values)
+				ev_keep <- abs(ev[ii, ])
+				p2 <- length(ev_keep)
+				art_stat <- sapply(1:(p2-1), function(kdim) {
+					a <- sum(ev[ii, 1:kdim])/kdim
+					b <- sum(ev[ii, (kdim+1):p2])/(p2-kdim) 
+					r <- ev_keep / c(a, b)
+					-p2*(N-1)*log(N*exp(1)/(N-1)) - (N-1)*sum(log(r)) + N*sum(r)
+				})
+				d <- art_stat <= qchisq(1-threshold, df=)
+				for (kdim in 1:(length(ev_keep) - 1)) {
+					r <- sapply()
+				}
+			}
+			
 		}
 	} else if(length(ev) <= 2){
 		# idem, the number of intrinsic dimensions cannot be larger than 1 in the case of 2 eigenvalues

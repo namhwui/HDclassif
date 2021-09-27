@@ -13,7 +13,7 @@
 #' @param itermax The maximum number of iterations allowed. The default is 200.
 #' @param eps A positive double, default is 0.001. It is the stopping criterion: the algorithm stops when the difference between two successive log-likelihoods is lower than \code{eps}.
 #' @param algo A character string indicating the algorithm to be used. The available algorithms are the Expectation-Maximisation ("EM"), the Classification E-M ("CEM") and the Stochastic E-M ("SEM"). The default algorithm is the "EM".
-#' @param d_select Either \dQuote{Cattell} (default) or \dQuote{BIC}. See details for more information. This parameter selects which method to use to select the intrinsic dimensions.
+#' @param d_select One of \dQuote{Cattell} (default), \dQuote{BIC}, or \dQuote{ART} (added by Nam-Hwui Kim). See details for more information. This parameter selects which method to use to select the intrinsic dimensions.
 #' @param init A character string or a vector of clusters. It is the way to initialize the E-M algorithm. There are five possible initialization: \dQuote{kmeans} (default), \dQuote{param}, \dQuote{random}, \dQuote{mini-em} or \dQuote{vector}. See details for more information. It can also be directly initialized with a vector containing the prior classes of the observations. If \code{init = "vector"}, then you should add the argument \code{init.vector}.
 #' @param init.vector A vector of integers or factors. It is a user-given initialization. It should be of the same length as of the data. Only used when \code{init = "vector"}.
 #' @param show Single logical. To diplay summary information on the results after the algorithm is done: set it to \code{TRUE}. By default it takes the value of \code{\link[HDclassif]{getHDclassif.show}} which is FALSE at the loading of the package. To permanently have \code{show=TRUE}, use \code{setHDclassif.show(TRUE)}.
@@ -83,7 +83,11 @@
 #' 				The intrinsic dimensions are selected with the BIC criterion. See Bouveyron \emph{et al.} (2010) for a discussion of this topic.
 #' 				For common dimension models, the procedure is done on the covariance matrix of the whole dataset.
 #' 			}
-#' 			\item{Note that "Cattell" (resp. "BIC") can be abreviated to "C" (resp. "B") and that this argument is not case sensitive.}
+#' 			\item{\dQuote{ART}:}{
+#' 				The intrinsic dimensions are selected with the Anderson Relaxation Test. See Kim and Browne (TBD) for a discussion of this topic.
+#' 				For common dimension models, the procedure is done on the covariance matrix of the whole dataset.
+#' 			}
+#' 			\item{Note that "Cattell" (resp. "BIC" and "ART") can be abreviated to "C" (resp. "B" and "A") and that this argument is not case sensitive.}
 #' 		}
 #' 		
 #' The different initializations are:
@@ -216,7 +220,7 @@ hddc  <- function(data, K=1:10, model=c("AkjBkQkDk"), threshold=0.2, criterion="
 	# Control of match.args:
 	criterion = myAlerts(criterion, "criterion", "singleCharacterMatch.arg", "HDDC: ", c("bic", "icl"))
 	algo = myAlerts(algo, "algo", "singleCharacterMatch.arg", "HDDC: ", c('EM', 'CEM', 'SEM'))
-	d_select = myAlerts(d_select, "d_select", "singleCharacterMatch.arg", "HDDC: ", c("cattell", "bic"))
+	d_select = myAlerts(d_select, "d_select", "singleCharacterMatch.arg", "HDDC: ", c("art", "cattell", "bic"))
 	init = myAlerts(init, "init", "singleCharacterMatch.arg", "HDDC: ", c('random', 'kmeans', 'mini-em', 'param', "vector"))
 	# We get the model names, properly ordered
 	model = hdc_getTheModel(model, all2models = TRUE)
@@ -485,6 +489,8 @@ hddc_main <- function(DATA, K, model, threshold, method, algo, itermax, eps, ini
 	
 	# We set d_max to a proper value
 	d_max = min(N, p, d_max)
+	# provision for Anderson Relaxation Test
+	if (method == "art" & N >= p) d_max <- p
 	
 	if ( any(model==ModelNames[7:14]) ){
 		# Common dimension models
@@ -497,7 +503,7 @@ hddc_main <- function(DATA, K, model, threshold, method, algo, itermax, eps, ini
 			S <- crossprod(DATA-matrix(MU, N, p, byrow=TRUE))/N
 			com_ev <- hdc_myEigen(S, d_max, only.values = TRUE)$values
 		}
-		if(is.null(com_dim)) com_dim <- hdclassif_dim_choice(com_ev, N, method, threshold, FALSE, noise.ctrl)
+		if(is.null(com_dim)) com_dim <- hdclassif_dim_choice(com_ev, N, method, threshold, FALSE, noise.ctrl, model)
 	}
 	
 	if (K>1){
@@ -512,7 +518,7 @@ hddc_main <- function(DATA, K, model, threshold, method, algo, itermax, eps, ini
 			S <- crossprod(DATA - matrix(MU, N, p, byrow=TRUE))/N
 			donnees <- eigen(S, symmetric=TRUE)
 			ev <- donnees$values
-			d <- if(is.numeric(method)) method else hdclassif_dim_choice(ev, N, method, threshold, FALSE, noise.ctrl)
+			d <- if(is.numeric(method)) method else hdclassif_dim_choice(ev, N, method, threshold, FALSE, noise.ctrl, model)
 			a <- ev[1:d]
 			b <- sum(ev[(d[1]+1):p])/(p-d[1])
 			
@@ -750,6 +756,7 @@ hddc_m_step  <- function(x, K, t, model, threshold, method, noise.ctrl, com_dim,
 	# we keep track of the trace (== sum of eigenvalues) to compute the b
 	traceVect = c()
 	
+	
 	if (N<p) {
 		if( model%in%c("AJBQD", "ABQD") ){
 			Y <- matrix(0, N, p)
@@ -780,6 +787,8 @@ hddc_m_step  <- function(x, K, t, model, threshold, method, noise.ctrl, com_dim,
 		traceVect = sum(diag(W))
 		ev <- donnees$values
 	} else {
+		# provision for Anderson Relaxation Test
+		#if (method == "art") d_max <- p
 		# ev <- matrix(0, K, p) # now we use d_max
 		ev <- matrix(0, K, d_max)
 		Q <- vector(mode='list', length=K)
@@ -802,7 +811,7 @@ hddc_m_step  <- function(x, K, t, model, threshold, method, noise.ctrl, com_dim,
 		if(com_dim>dmax) com_dim <- max(dmax, 1)
 		d <- rep(com_dim, length=K)
 	} else {
-		d <- hdclassif_dim_choice(ev, n, method, threshold, FALSE, noise.ctrl)
+		d <- hdclassif_dim_choice(ev, n, method, threshold, FALSE, noise.ctrl, model)
 	}
 	
 	# Setup of the Qi matrices	
