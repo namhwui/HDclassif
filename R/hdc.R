@@ -97,22 +97,8 @@ hdclassif_dim_choice <- function(ev, n, method, threshold, graph, noise.ctrl, mo
 			#     d_max may be less than p if the user doesn't want to search through all possible intrinsic dimensions.
 			#     for now, d_max is set to p.
 			#     it may be relaxed in the future for computational convenience, but theoretical correctness is prioritised now.
-			if (model)
-			for (ii in 1:K) {
-				# to prevent errors from incorrect sign (can occur in small values)
-				ev_keep <- abs(ev[ii, ])
-				p2 <- length(ev_keep)
-				art_stat <- sapply(1:(p2-1), function(kdim) {
-					a <- sum(ev[ii, 1:kdim])/kdim
-					b <- sum(ev[ii, (kdim+1):p2])/(p2-kdim) 
-					r <- ev_keep / c(a, b)
-					-p2*(N-1)*log(N*exp(1)/(N-1)) - (N-1)*sum(log(r)) + N*sum(r)
-				})
-				d <- art_stat <= qchisq(1-threshold, df=)
-				for (kdim in 1:(length(ev_keep) - 1)) {
-					r <- sapply()
-				}
-			}
+			d <- rep(1, K)
+			d <- art_main(ev, n, threshold, model = model)
 			
 		}
 	} else if(length(ev) <= 2){
@@ -166,6 +152,9 @@ hdclassif_dim_choice <- function(ev, n, method, threshold, graph, noise.ctrl, mo
 				plot(B, type='l', col=4, main=paste("BIC criterion\nd=", d, sep=''), ylab='BIC', xlab="Dimension")
 				points(d, B[d], col=2)
 			}
+		} else if (method == "art") {
+			ev <- matrix(ev, nrow = 1)
+			d <- art_main(ev, n, threshold, model = model)
 		}
 	}
 	
