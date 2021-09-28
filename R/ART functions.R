@@ -375,3 +375,20 @@ art_main <- function(ev, n, threshold, graph = F, noise.ctrl = 1e-6, model) {
 	}
 	d
 }
+
+
+###################################
+# Scree Test
+###################################
+
+scree_test <- function(ev, threshold) {
+	if (is.null(dim(ev))) {
+		ev <- matrix(ev, nrow = 1)
+	}
+	abs_diff <- apply(ev, 1, function(x) {
+		x_diff <- abs(diff(x))
+		x_diff / max(x_diff)
+	})
+	apply((abs_diff > threshold) * 1:(ncol(ev) - 1), 2, max)
+	
+}
