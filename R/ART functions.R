@@ -145,14 +145,15 @@ art_dim_dep <- function(ev, n, threshold, model) {
 			test <- art_ABk(ev, n)(d_init)
 			pval <- pchisq(test, df_K, lower.tail = F)
 			whm_pval <- 1 / sum(1 / pval)
-			
+			#print(d_init)
 			if (whm_pval < threshold) {
+				#print(pval)
 				pval_min <- suppressWarnings(min(pval[d_init < p-1]))
 				if (is.infinite(pval_min)) {
 					continue <- F
 					return(d_init)
 				}
-				raise <- which(pval == pval_min)
+				raise <- which(pval[d_init < p-1] == pval_min)[1]
 				d_init[raise] <- d_init[raise] + 1
 			} else {
 				continue <- F
@@ -173,7 +174,7 @@ art_dim_dep <- function(ev, n, threshold, model) {
 					continue <- F
 					return(d_init)
 				}
-				raise <- which(pval == pval_min)
+				raise <- which(pval[d_init < p-1] == pval_min)[1]
 				d_init[raise] <- d_init[raise] + 1
 			} else {
 				continue <- F
@@ -194,7 +195,7 @@ art_dim_dep <- function(ev, n, threshold, model) {
 					continue <- F
 					return(d_init)
 				}
-				raise <- which(pval == pval_min)
+				raise <- which(pval[d_init < p-1] == pval_min)[1]
 				d_init[raise] <- d_init[raise] + 1
 			} else {
 				continue <- F
@@ -215,7 +216,7 @@ art_dim_dep <- function(ev, n, threshold, model) {
 					continue <- F
 					return(d_init)
 				}
-				raise <- which(pval == pval_min)
+				raise <- which(pval[d_init < p-1] == pval_min)[1]
 				d_init[raise] <- d_init[raise] + 1
 			} else {
 				continue <- F
