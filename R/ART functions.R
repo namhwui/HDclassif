@@ -8,6 +8,7 @@ art_AkjBk <- function(v, nk, x) {
 	a <- v[1:x]
 	b <- mean(v[-(1:x)])
 	ratio <- v / c(a, rep(b, p - x))
+	#print(range(v))
 	-p*(nk-1)*log(nk*exp(1)/(nk-1)) - (nk-1)*sum(log(ratio)) + nk*sum(ratio)
 }
 
@@ -97,18 +98,21 @@ art_AB <- function(ev, n) {
 	}
 }
 
-art_dim_indep <- function(ev, n, threshold, model) {
+art_dim_indep <- function(ev, n, threshold, model, eps = 1e-6) {
 	K <- nrow(ev)
-	p <- ncol(ev)
-	d_all <- 1:(p-1)
+	#p <- ncol(ev)
+	#d_all <- 1:(p-1)
 	val <- rep(1,K)
 	
 	if (model == "AKJBKQKDK") {
 		for (ii in 1:K) {
+			ev_temp <- ev[ii, ][ev[ii, ] > eps]
+			p <- length(ev_temp)
+			d_all <- 1:(p-1)
 			df_all <- p*(p+1)/2 - d_all*(p-(d_all+1)/2) - d_all - 1
 			#print(df_all)
 			test <- sapply(d_all, function(x) {
-				art_AkjBk(ev[ii, ], n[ii], x)
+				art_AkjBk(ev_temp, n[ii], x)
 			})
 			#print(test)
 			val[ii] <- which(test <= qchisq(1 - threshold, df_all))[1]
@@ -118,10 +122,14 @@ art_dim_indep <- function(ev, n, threshold, model) {
 		}
 	} else if (model == "AKBKQKDK") {
 		for (ii in 1:K) {
+			ev_temp <- ev[ii, ][ev[ii, ] > eps]
+			p <- length(ev_temp)
+			d_all <- 1:(p-1)
 			df_all <- p*(p+1)/2 - d_all*(p-(d_all+1)/2) - 2
+			
 			#print(df_all)
 			test <- sapply(d_all, function(x) {
-				art_AkBk(ev[ii, ], n[ii], x)
+				art_AkBk(ev_temp, n[ii], x)
 			})
 			val[ii] <- which(test <= qchisq(1 - threshold, df_all))[1]
 			if (is.na(val[ii])) {
@@ -132,12 +140,17 @@ art_dim_indep <- function(ev, n, threshold, model) {
 	val
 }
 
-art_dim_dep <- function(ev, n, threshold, model) {
+art_dim_dep <- function(ev, n, threshold, model, eps = 1e-6) {
 	K <- nrow(ev)
-	p <- ncol(ev)
 	#d_all <- 1:(p-1)
 	d_init <- rep(1, K)
 	continue <- T
+	
+	# remove excessively small eigenvalues
+	# since dividing by them causes NaN
+	d_max <- max(apply(ev > eps, 2, prod) * (1:ncol(ev)))
+	ev <- ev[, 1:d_max]
+	p <- ncol(ev)
 	
 	if (model == "ABKQKDK") {
 		while (continue) {
@@ -163,7 +176,7 @@ art_dim_dep <- function(ev, n, threshold, model) {
 		
 	} else if (model == "AKJBQKDK") {
 		while (continue) {
-			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - d_init - n*d_init/sum(n*d_init)
+			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - d_init - n*(p-d_init)/sum(n*(p-d_init))
 			test <- art_AkjB(ev, n)(d_init)
 			pval <- pchisq(test, df_K, lower.tail = F)
 			whm_pval <- 1 / sum(1 / pval)
@@ -185,7 +198,7 @@ art_dim_dep <- function(ev, n, threshold, model) {
 		
 	} else if (model == "AKBQKDK") {
 		while (continue) {
-			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - 1 - n*d_init/sum(n*d_init)
+			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - 1 - n*(p-d_init)/sum(n*(p-d_init))
 			test <- art_AkB(ev, n)(d_init)
 			pval <- pchisq(test, df_K, lower.tail = F)
 			whm_pval <- 1 / sum(1 / pval)
@@ -207,7 +220,7 @@ art_dim_dep <- function(ev, n, threshold, model) {
 		
 	} else if (model == "ABQKDK") {
 		while (continue) {
-			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - 2*n*d_init/sum(n*d_init)
+			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - n*d_init/sum(n*d_init) - n*(p-d_init)/sum(n*(p-d_init))
 			test <- art_AB(ev, n)(d_init)
 			pval <- pchisq(test, df_K, lower.tail = F)
 			whm_pval <- 1 / sum(1 / pval)
@@ -229,12 +242,17 @@ art_dim_dep <- function(ev, n, threshold, model) {
 	}
 }
 
-art_comdim <- function(ev, n, threshold, model) {
+art_comdim <- function(ev, n, threshold, model, eps = 1e-6) {
 	K <- nrow(ev)
-	p <- ncol(ev)
-	d_all <- 1:(p-1)
 	d_init <- rep(1, K)
 	continue <- T
+	
+	# remove excessively small eigenvalues
+	# since dividing by them causes NaN
+	d_max <- max(apply(ev > eps, 2, prod) * (1:ncol(ev)))
+	ev <- ev[, 1:d_max]
+	p <- ncol(ev)
+	#d_all <- 1:(p-1)
 	
 	if (model == "AKJBKQKD") {
 		while (continue) {
@@ -299,7 +317,7 @@ art_comdim <- function(ev, n, threshold, model) {
 		return(d_init)
 	} else if (model == "AKJBQKD") {
 		while (continue) {
-			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - d_init - n*d_init/sum(n*d_init)
+			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - d_init - n*(p-d_init)/sum(n*(p-d_init))
 			test <- art_AkjB(ev, n)(d_init)
 			pval <- pchisq(test, df_K, lower.tail = F)
 			whm_pval <- 1 / sum(1 / pval)
@@ -318,7 +336,7 @@ art_comdim <- function(ev, n, threshold, model) {
 		return(d_init)
 	} else if (model == "AKBQKD") {
 		while (continue) {
-			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - 1 - n*d_init/sum(n*d_init)
+			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - 1 - n*(p-d_init)/sum(n*(p-d_init))
 			test <- art_AkB(ev, n)(d_init)
 			pval <- pchisq(test, df_K, lower.tail = F)
 			whm_pval <- 1 / sum(1 / pval)
@@ -337,7 +355,7 @@ art_comdim <- function(ev, n, threshold, model) {
 		return(d_init)
 	} else if (model == "ABQKD") {
 		while (continue) {
-			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - 2*n*d_init/sum(n*d_init)
+			df_K <- p*(p+1)/2 - d_init*(p-(d_init+1)/2) - n*d_init/sum(n*d_init) - n*(p-d_init)/sum(n*(p-d_init))
 			test <- art_AB(ev, n)(d_init)
 			pval <- pchisq(test, df_K, lower.tail = F)
 			whm_pval <- 1 / sum(1 / pval)
