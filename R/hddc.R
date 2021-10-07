@@ -490,7 +490,7 @@ hddc_main <- function(DATA, K, model, threshold, method, algo, itermax, eps, ini
 	# We set d_max to a proper value
 	d_max = min(N, p, d_max)
 	# provision for Anderson Relaxation Test
-	if (method == "art" & N >= p) d_max <- p
+	#if (method == "art" & N >= p) d_max <- p
 	
 	if ( any(model==ModelNames[7:14]) ){
 		# Common dimension models
