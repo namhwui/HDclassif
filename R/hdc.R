@@ -95,9 +95,7 @@ hdclassif_dim_choice <- function(ev, n, method, threshold, graph, noise.ctrl, mo
 			# ev: (K by d_max) matrix of eigenvalues from (component-wise) covariance matrices
 			#     each row is a component.
 			#     d_max may be less than p if the user doesn't want to search through all possible intrinsic dimensions.
-			#     for now, d_max is set to p.
-			#     it may be relaxed in the future for computational convenience, but theoretical correctness is prioritised now.
-			d <- rep(1, K)
+			#d <- rep(1, K)
 			d <- art_main(ev, n, threshold, model = model)
 			
 		}
