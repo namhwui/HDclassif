@@ -6,6 +6,7 @@ source("R/hdc.R")
 source("R/hddc.R")
 source("R/ART functions.R")
 
+set.seed(112358)
 reps <- 500
 ng <- c(100, 500)
 ev_true <- matrix(nrow = 2, ncol = 50)
@@ -17,7 +18,7 @@ sigma0 <- list(Q[[1]] %*% diag(ev_true[1, ]) %*% t(Q[[1]]),
 			   Q[[2]] %*% diag(ev_true[2, ]) %*% t(Q[[2]]))
 
 
-set.seed(112358)
+
 val1 <- lapply(1:4, function(x) {
 	array(dim = c(500, 2, 2))
 })
